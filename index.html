@@ -7,9 +7,7 @@
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -19,7 +17,10 @@
       <header>
         <h1>Raekke</h1>
         <p>Message queue implemented with Redis and PHP.</p>
+
         <p class="view"><a href="https://github.com/henrikbjorn/Raekke">View the Project on GitHub <small>henrikbjorn/Raekke</small></a></p>
+
+
         <ul>
           <li><a href="https://github.com/henrikbjorn/Raekke/zipball/master">Download <strong>ZIP File</strong></a></li>
           <li><a href="https://github.com/henrikbjorn/Raekke/tarball/master">Download <strong>TAR Ball</strong></a></li>
@@ -34,7 +35,16 @@ allows for easy creation of workers and creating distributed systems.</p>
 
 <p><a href="https://travis-ci.org/henrikbjorn/Raekke"><img src="https://travis-ci.org/henrikbjorn/Raekke.png?branch=master" alt="Build Status"></a></p>
 
-<h2>Getting Started</h2>
+<h2>Todo</h2>
+
+<ul>
+<li>JMS Serializer integration does not support having custom message classes.</li>
+<li>The <code>Consumer</code> class does not understand signals. This mean that a kill signal
+is necesarry for it to die.</li>
+<li>The <code>Consumer</code> class does not fork its jobs.</li>
+<li>Consumers does not report what they are working on, or that they have begun
+working.</li>
+</ul><h2>Getting Started</h2>
 
 <p>Raekke allows you as Resque to create messages and place them on a queue. And
 later on pull thoose off the queue and process them. It is not a a complete
@@ -68,16 +78,16 @@ sure your sets does not conflict with others of the same same.</p>
 <span class="nv">$connection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Connection</span><span class="p">(</span><span class="nv">$predis</span><span class="p">);</span>
 </pre></div>
 
-<h3>Sending Messages</h3>
+<h3>Producing Messages</h3>
 
 <p>Any message sent to Raekke must be an instance of <code>Raekke\Message\MessageInterface</code>
 which have a <code>getName</code> and <code>getQueue</code> method. <code>getName</code> is used when working on
 messages and identifies the worker service that should work on it.</p>
 
-<p>A message is given to a publisher that send the message to the right queue.
+<p>A message is given to a producer that send the message to the right queue.
 It is also possible to get the queue directly from the queue factory and push
 the message there. But remember to wrap the message in a <code>MessageWrapper</code> object.
-The easiest is to give it to the publisher as the queue name
+The easiest is to give it to the producer as the queue name
 is taken from the message object.</p>
 
 <p>To make it easier to send messages and not require every type to be implemented
@@ -92,7 +102,7 @@ used it is needed to add metadata for being able to serialize and deserialize th
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\MessagePublisher</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Producer</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\Message\DefaultMessage</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\Message\MessageWrapper</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\QueueFactory</span><span class="p">;</span>
@@ -104,82 +114,64 @@ used it is needed to add metadata for being able to serialize and deserialize th
 
 <span class="c1">// .. create connection</span>
 <span class="nv">$factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">QueueFactory</span><span class="p">(</span><span class="nv">$connection</span><span class="p">,</span> <span class="nv">$serializer</span><span class="p">);</span>
-<span class="nv">$publisher</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MessagePublisher</span><span class="p">(</span><span class="nv">$factory</span><span class="p">);</span>
+<span class="nv">$producer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Producer</span><span class="p">(</span><span class="nv">$factory</span><span class="p">);</span>
 
 <span class="nv">$message</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DefaultMessage</span><span class="p">(</span><span class="s2">"SendNewsletter"</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
     <span class="s1">'newsletterId'</span> <span class="o">=&gt;</span> <span class="mi">12</span><span class="p">,</span>
 <span class="p">));</span>
 
-<span class="nv">$publisher</span><span class="o">-&gt;</span><span class="na">publish</span><span class="p">(</span><span class="nv">$message</span><span class="p">);</span>
+<span class="nv">$producer</span><span class="o">-&gt;</span><span class="na">publish</span><span class="p">(</span><span class="nv">$message</span><span class="p">);</span>
 
 <span class="c1">// or give it to a queue directly</span>
 <span class="nv">$factory</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'my-queue'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span> <span class="nx">MessageWrapper</span><span class="p">(</span><span class="nv">$message</span><span class="p">));</span>
 </pre></div>
 
-<h3>Working on Messages</h3>
+<h3>Consuming Messages</h3>
 
 <p>A single message represents a job that needs to be performed. And as described
-earlier a message's name is used to determaine what worker should have that
-message. For that a worker manager is needed.</p>
+earlier a message's name is used to determaine what service object should have
+that message.</p>
+
+<p>A service object can be any object that have a method corresponding to the message
+name prefixed with on. So <code>new DefaultMessage('SendNewsletter')</code> will trigger a
+call to <code>$serviceObject-&gt;onSendNewsletter</code>. For the system to know what service
+object should handle what messages it is need to register them first.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\WorkerManager</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\ServiceResolver</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Consumer</span><span class="p">;</span>
 
-<span class="c1">// create a $queueManager instance.</span>
+<span class="c1">// .. create connection and a queuefactory</span>
+<span class="c1">// NewsletterMessageHandler is a pseudo service object that responds to</span>
+<span class="c1">// onSendNewsletter.</span>
 
-<span class="nv">$workerManager</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WorkerManager</span><span class="p">(</span><span class="nv">$queueManager</span><span class="p">);</span>
+<span class="nv">$serviceResolver</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ServiceResolver</span><span class="p">;</span>
+<span class="nv">$serviceResolver</span><span class="o">-&gt;</span><span class="na">register</span><span class="p">(</span><span class="s1">'SendNewsletter'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">NewsletterMessageHandler</span><span class="p">);</span>
+
+<span class="c1">// Create a Consumer and start the loop. The second argument is optional and</span>
+<span class="c1">// is the queue failed messages should be added to.</span>
+<span class="nv">$consumer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Consumer</span><span class="p">(</span><span class="nv">$serviceResolver</span><span class="p">,</span> <span class="nv">$queueFactory</span><span class="o">-&gt;</span><span class="na">create</span><span class="p">(</span><span class="s1">'failed'</span><span class="p">));</span>
+<span class="nv">$consumer</span><span class="o">-&gt;</span><span class="na">consume</span><span class="p">(</span><span class="nv">$queueFactory</span><span class="o">-&gt;</span><span class="na">create</span><span class="p">(</span><span class="s1">'send-newsletter'</span><span class="p">));</span>
 </pre></div>
 
-<p>The worker manager also needs to know what workers it can send messages to.
-A worker is a server class. If it is an object and the worker is registered to
-<code>SendNewsletter</code> the manager will call the method <code>$workerService-&gt;onSendNewsletter</code>.
-This allows for a single service class to handle more than one message.</p>
+<p>Raekke comes with a <code>ConsumeCommand</code> which can be used with Symfony Console 
+component.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">class</span> <span class="nc">NewsletterWorker</span>
-<span class="p">{</span>
-    <span class="k">public</span> <span class="k">function</span> <span class="nf">onSendNewsletter</span><span class="p">(</span><span class="nx">DefaultMessage</span> <span class="nv">$message</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="c1">// Do some work on DefaultMessage here.</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+<span class="k">use</span> <span class="nx">Raekke\Command\ConsumeCommand</span><span class="p">;</span>
 
-<span class="nv">$workerManager</span><span class="o">-&gt;</span><span class="na">register</span><span class="p">(</span><span class="s1">'SendNewsletter'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">NewsletterWorker</span><span class="p">);</span>
-
-<span class="c1">// or register multiple services at once.</span>
-<span class="nv">$workerManager</span><span class="o">-&gt;</span><span class="na">registerServices</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
-    <span class="s1">'SendNewsletter'</span> <span class="o">=&gt;</span> <span class="k">new</span> <span class="nx">NewsletterWorker</span><span class="p">(),</span>
-<span class="p">));</span>
-</pre></div>
-
-<p>The worker manager would normally be abstracted out and populated by a container
-of some sort like the <a href="http://symfony.com/doc/current/components/dependency_injection">Symfony Dependency Injection</a>.</p>
-
-<p>Anyone who have created a deamon in php and tried handling signal's they know
-it is hard. Therefor Raekke comes with a worker command for <a href="http://symfony.com/doc/current/components/console">Symfony Console</a>
-component. The command should be added to your console application.</p>
-
-<div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
-
-<span class="k">use</span> <span class="nx">Raekke\Command\WorkerCommand</span><span class="p">;</span>
-
-<span class="c1">// .. create an instance of Symfony\Console\Application as $app</span>
-<span class="c1">// .. create a Raekke\WorkerManager as $workerManager</span>
-<span class="nv">$app</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="k">new</span> <span class="nx">WorkerCommand</span><span class="p">(</span><span class="nv">$workerManager</span><span class="p">));</span>
+<span class="c1">// create $console application</span>
+<span class="nv">$console</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="k">new</span> <span class="nx">ConsumeCommand</span><span class="p">(</span><span class="nv">$services</span><span class="p">,</span> <span class="nv">$queueManager</span><span class="p">));</span>
 </pre></div>
 
 <p>It can then be used as any other console command. The argument given should be
 the queue that your messages is on. If we use the earlier example with sending
 newsletter it would look like this.</p>
 
-<div class="highlight"><pre><span class="nv">$ </span>/path/to/console raekke:worker --interval<span class="o">=</span>10 <span class="s1">'send-newsletter'</span>
+<div class="highlight"><pre><span class="nv">$ </span>/path/to/console raekke:consume <span class="s1">'send-newsletter'</span>
 </pre></div>
-
-<p><code>--interval</code> is the time it will wait for a single message to be returned from
-the backend before assuming null and it being empty it defaults to 5 and is
-optional.</p>
 
 <h2>Integration with Frameworks</h2>
 
@@ -212,12 +204,12 @@ better for your needs.</p>
 this i encourage you to contact me and we will figure out how we can work
 together on this.</p>
       </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/henrikbjorn">henrikbjorn</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
     </div>
-    <footer>
-      <p>Project maintained by <a href="https://github.com/henrikbjorn">henrikbjorn</a></p>
-      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
-    </footer>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    <script src="javascripts/scale.fix.js"></script>
     
   </body>
 </html>
