@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Raekke by henrikbjorn</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Raekke</h1>
+        <p>Message queue implemented with Redis and PHP.</p>
+        <p class="view"><a href="https://github.com/henrikbjorn/Raekke">View the Project on GitHub <small>henrikbjorn/Raekke</small></a></p>
+        <ul>
+          <li><a href="https://github.com/henrikbjorn/Raekke/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/henrikbjorn/Raekke/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/henrikbjorn/Raekke">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>Raekke</h1>
+
+<p>Raekke is a message queue implemented in php. It is very similiar to Resque and
+allows for easy creation of workers and creating distributed systems.</p>
+
+<p><a href="https://travis-ci.org/henrikbjorn/Raekke"><img src="https://travis-ci.org/henrikbjorn/Raekke.png?branch=master" alt="Build Status"></a></p>
+
+<h2>Getting Started</h2>
+
+<p>Raekke allows you as Resque to create messages and place them on a queue. And
+later on pull thoose off the queue and process them. It is not a a complete
+solution to have any object method being called at a later time (as resque).</p>
+
+<h3>Installing</h3>
+
+<p>The easiest way to install Raekke is by using <a href="http://getcomposer.org">Composer</a>.
+If your projects do not already use this, it is highly recommended to start.</p>
+
+<div class="highlight"><pre><span class="nv">$ </span>composer require henrikbjorn/raekke:dev-master
+</pre></div>
+
+<h3>Configuring Predis</h3>
+
+<p>For storing messages Redis is used together with Predis as the communication
+driver between php and Redis. This means Predis and Redis is required.</p>
+
+<p>It is highly encourage to use a prefix for Predis (but not enforces) to make
+sure your sets does not conflict with others of the same same.</p>
+
+<div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">use</span> <span class="nx">Raekke\Connection</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Predis\Client</span><span class="p">;</span>
+
+<span class="nv">$predis</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Client</span><span class="p">(</span><span class="s1">'tcp://localhost'</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'prefix'</span> <span class="o">=&gt;</span> <span class="s1">'raekke:'</span><span class="p">,</span>
+<span class="p">));</span>
+
+<span class="nv">$connection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Connection</span><span class="p">(</span><span class="nv">$predis</span><span class="p">);</span>
+</pre></div>
+
+<h3>Sending Messages</h3>
+
+<p>Any message sent to Raekke must be an instance of <code>Raekke\Message\MessageInterface</code>
+which have a <code>getName</code> and <code>getQueue</code> method. <code>getName</code> is used when working on
+messages and identifies the worker service that should work on it.</p>
+
+<p>A message is given to a publisher that send the message to the right queue.
+It is also possible to get the queue directly from the queue factory and push
+the message there. But remember to wrap the message in a <code>MessageWrapper</code> object.
+The easiest is to give it to the publisher as the queue name
+is taken from the message object.</p>
+
+<p>To make it easier to send messages and not require every type to be implemented
+in a seperate class a <code>Raekke\Message\DefaultMessage</code> is provided. It can hold
+any number of proberties and only needs a name for the message. The queue name
+is then generated from that. When generating the queue name it will insert a "_"
+before any uppercase letters and then lowercase everything.</p>
+
+<p>Messages are serialized to json using <a href="http://jmsyst.com/libs/serializer">JMS Serializer</a>.
+Therefor an instance of that is required. Also if custom message classes are
+used it is needed to add metadata for being able to serialize and deserialize them.</p>
+
+<div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">use</span> <span class="nx">Raekke\MessagePublisher</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Message\DefaultMessage</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Message\MessageWrapper</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\QueueFactory</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Serializer\Serializer</span><span class="p">;</span>
+
+<span class="c1">// .. create serializer instance where src/Raekke/Resources/serializer</span>
+<span class="c1">// is registered as a metadata dir with "Raekke" as prefix.</span>
+<span class="nv">$serializer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Serializer</span><span class="p">(</span><span class="nv">$jmsSerializer</span><span class="p">);</span>
+
+<span class="c1">// .. create connection</span>
+<span class="nv">$factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">QueueFactory</span><span class="p">(</span><span class="nv">$connection</span><span class="p">,</span> <span class="nv">$serializer</span><span class="p">);</span>
+<span class="nv">$publisher</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">MessagePublisher</span><span class="p">(</span><span class="nv">$factory</span><span class="p">);</span>
+
+<span class="nv">$message</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DefaultMessage</span><span class="p">(</span><span class="s2">"SendNewsletter"</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
+    <span class="s1">'newsletterId'</span> <span class="o">=&gt;</span> <span class="mi">12</span><span class="p">,</span>
+<span class="p">));</span>
+
+<span class="nv">$publisher</span><span class="o">-&gt;</span><span class="na">publish</span><span class="p">(</span><span class="nv">$message</span><span class="p">);</span>
+
+<span class="c1">// or give it to a queue directly</span>
+<span class="nv">$factory</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'my-queue'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span> <span class="nx">MessageWrapper</span><span class="p">(</span><span class="nv">$message</span><span class="p">));</span>
+</pre></div>
+
+<h3>Working on Messages</h3>
+
+<p>A single message represents a job that needs to be performed. And as described
+earlier a message's name is used to determaine what worker should have that
+message. For that a worker manager is needed.</p>
+
+<div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">use</span> <span class="nx">Raekke\WorkerManager</span><span class="p">;</span>
+
+<span class="c1">// create a $queueManager instance.</span>
+
+<span class="nv">$workerManager</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WorkerManager</span><span class="p">(</span><span class="nv">$queueManager</span><span class="p">);</span>
+</pre></div>
+
+<p>The worker manager also needs to know what workers it can send messages to.
+A worker is a server class. If it is an object and the worker is registered to
+<code>SendNewsletter</code> the manager will call the method <code>$workerService-&gt;onSendNewsletter</code>.
+This allows for a single service class to handle more than one message.</p>
+
+<div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">class</span> <span class="nc">NewsletterWorker</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">onSendNewsletter</span><span class="p">(</span><span class="nx">DefaultMessage</span> <span class="nv">$message</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// Do some work on DefaultMessage here.</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nv">$workerManager</span><span class="o">-&gt;</span><span class="na">register</span><span class="p">(</span><span class="s1">'SendNewsletter'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">NewsletterWorker</span><span class="p">);</span>
+
+<span class="c1">// or register multiple services at once.</span>
+<span class="nv">$workerManager</span><span class="o">-&gt;</span><span class="na">registerServices</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+    <span class="s1">'SendNewsletter'</span> <span class="o">=&gt;</span> <span class="k">new</span> <span class="nx">NewsletterWorker</span><span class="p">(),</span>
+<span class="p">));</span>
+</pre></div>
+
+<p>The worker manager would normally be abstracted out and populated by a container
+of some sort like the <a href="http://symfony.com/doc/current/components/dependency_injection">Symfony Dependency Injection</a>.</p>
+
+<p>Anyone who have created a deamon in php and tried handling signal's they know
+it is hard. Therefor Raekke comes with a worker command for <a href="http://symfony.com/doc/current/components/console">Symfony Console</a>
+component. The command should be added to your console application.</p>
+
+<div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
+
+<span class="k">use</span> <span class="nx">Raekke\Command\WorkerCommand</span><span class="p">;</span>
+
+<span class="c1">// .. create an instance of Symfony\Console\Application as $app</span>
+<span class="c1">// .. create a Raekke\WorkerManager as $workerManager</span>
+<span class="nv">$app</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="k">new</span> <span class="nx">WorkerCommand</span><span class="p">(</span><span class="nv">$workerManager</span><span class="p">));</span>
+</pre></div>
+
+<p>It can then be used as any other console command. The argument given should be
+the queue that your messages is on. If we use the earlier example with sending
+newsletter it would look like this.</p>
+
+<div class="highlight"><pre><span class="nv">$ </span>/path/to/console raekke:worker --interval<span class="o">=</span>10 <span class="s1">'send-newsletter'</span>
+</pre></div>
+
+<p><code>--interval</code> is the time it will wait for a single message to be returned from
+the backend before assuming null and it being empty it defaults to 5 and is
+optional.</p>
+
+<h2>Integration with Frameworks</h2>
+
+<p>To make it easier to start up and have it "just work" with sending messages a
+number of integrations have been created.</p>
+
+<ul>
+<li>Somebody should do this part...</li>
+</ul><h2>Monitoring</h2>
+
+<p>Having a message queue where it is not possible to what whats in queue and the
+contents of the messages is not very handy. And for that there is <a href="https://github.com/henrikbjorn/Juno">Juno</a>.</p>
+
+<p>It is implemented in Silex and is very lightweight. Also if needed it can be
+embedded in other Silex or Flint applications.</p>
+
+<p><img src="http://i.imgur.com/oZFzfKq.png" alt="Juno"></p>
+
+<h2>Alternatives</h2>
+
+<p>If this is not your cup of tea there exists other alternatives that might be
+better for your needs.</p>
+
+<ul>
+<li><a href="https://github.com/chrisboulton/php-resque">php-resque</a></li>
+<li><a href="https://github.com/defunkt/resque">Resque</a></li>
+</ul><h2>Happy Customers</h2>
+
+<p>Not really anybody as it is not completly finished. If you need something like
+this i encourage you to contact me and we will figure out how we can work
+together on this.</p>
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/henrikbjorn">henrikbjorn</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
