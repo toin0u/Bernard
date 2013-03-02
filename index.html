@@ -35,16 +35,7 @@ allows for easy creation of workers and creating distributed systems.</p>
 
 <p><a href="https://travis-ci.org/henrikbjorn/Raekke"><img src="https://travis-ci.org/henrikbjorn/Raekke.png?branch=master" alt="Build Status"></a></p>
 
-<h2>Todo</h2>
-
-<ul>
-<li>JMS Serializer integration does not support having custom message classes.</li>
-<li>The <code>Consumer</code> class does not understand signals. This mean that a kill signal
-is necesarry for it to die.</li>
-<li>The <code>Consumer</code> class does not fork its jobs.</li>
-<li>Consumers does not report what they are working on, or that they have begun
-working.</li>
-</ul><h2>Getting Started</h2>
+<h2>Getting Started</h2>
 
 <p>Raekke allows you as Resque to create messages and place them on a queue. And
 later on pull thoose off the queue and process them. It is not a a complete
@@ -57,6 +48,15 @@ If your projects do not already use this, it is highly recommended to start.</p>
 
 <div class="highlight"><pre><span class="nv">$ </span>composer require henrikbjorn/raekke:dev-master
 </pre></div>
+
+<h3>Examples</h3>
+
+<p>In the <code>example</code> directory there are two examples of running Raekke. <code>producer.php</code> will
+connect to redis on localhost and produce <code>EchoTime</code> messages. <code>consumer.php</code> will consume
+theese and print the timestamp.</p>
+
+<p><code>in_memory.php</code> will produce 20 <code>EchoTime</code> messages and consume them right they
+have been sent. It uses <code>SplQueue</code> and does not need a redis backend.</p>
 
 <h3>Configuring Predis</h3>
 
@@ -86,7 +86,7 @@ messages and identifies the worker service that should work on it.</p>
 
 <p>A message is given to a producer that send the message to the right queue.
 It is also possible to get the queue directly from the queue factory and push
-the message there. But remember to wrap the message in a <code>MessageWrapper</code> object.
+the message there. But remember to wrap the message in a <code>Envelope</code> object.
 The easiest is to give it to the producer as the queue name
 is taken from the message object.</p>
 
@@ -102,10 +102,10 @@ used it is needed to add metadata for being able to serialize and deserialize th
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\Producer</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\Message\DefaultMessage</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\Message\MessageWrapper</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\QueueFactory</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Message\Envelope</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Producer</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\QueueFactory\QueueFactory</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\Serializer\Serializer</span><span class="p">;</span>
 
 <span class="c1">// .. create serializer instance where src/Raekke/Resources/serializer</span>
@@ -123,8 +123,14 @@ used it is needed to add metadata for being able to serialize and deserialize th
 <span class="nv">$producer</span><span class="o">-&gt;</span><span class="na">publish</span><span class="p">(</span><span class="nv">$message</span><span class="p">);</span>
 
 <span class="c1">// or give it to a queue directly</span>
-<span class="nv">$factory</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'my-queue'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span> <span class="nx">MessageWrapper</span><span class="p">(</span><span class="nv">$message</span><span class="p">));</span>
+<span class="nv">$factory</span><span class="o">-&gt;</span><span class="na">get</span><span class="p">(</span><span class="s1">'my-queue'</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">enqueue</span><span class="p">(</span><span class="k">new</span> <span class="nx">Envelope</span><span class="p">(</span><span class="nv">$message</span><span class="p">));</span>
 </pre></div>
+
+<h4>In Memory Queues</h4>
+
+<p>Raekke comes with a implemention for <code>SplQueue</code> which is completly in memory
+It is useful for development and/or testing. As you dont want actions to be
+performed.</p>
 
 <h3>Consuming Messages</h3>
 
@@ -179,7 +185,9 @@ newsletter it would look like this.</p>
 number of integrations have been created.</p>
 
 <ul>
-<li>Somebody should do this part...</li>
+<li>
+<strong>Silex</strong>: <a href="https://github.com/henrikbjorn/RaekkeServiceProvider">RaekkeServiceProvider</a>
+</li>
 </ul><h2>Monitoring</h2>
 
 <p>Having a message queue where it is not possible to what whats in queue and the
@@ -187,8 +195,6 @@ contents of the messages is not very handy. And for that there is <a href="https
 
 <p>It is implemented in Silex and is very lightweight. Also if needed it can be
 embedded in other Silex or Flint applications.</p>
-
-<p><img src="http://i.imgur.com/oZFzfKq.png" alt="Juno"></p>
 
 <h2>Alternatives</h2>
 
