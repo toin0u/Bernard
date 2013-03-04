@@ -70,19 +70,19 @@ sure your sets does not conflict with others of the same same.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\Connection</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Connection\PredisConnection</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Predis\Client</span><span class="p">;</span>
 
 <span class="nv">$predis</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Client</span><span class="p">(</span><span class="s1">'tcp://localhost'</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
     <span class="s1">'prefix'</span> <span class="o">=&gt;</span> <span class="s1">'raekke:'</span><span class="p">,</span>
 <span class="p">));</span>
 
-<span class="nv">$connection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Connection</span><span class="p">(</span><span class="nv">$predis</span><span class="p">);</span>
+<span class="nv">$connection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PredisConnection</span><span class="p">(</span><span class="nv">$predis</span><span class="p">);</span>
 </pre></div>
 
 <h3>Producing Messages</h3>
 
-<p>Any message sent to Raekke must be an instance of <code>Raekke\Message\MessageInterface</code>
+<p>Any message sent to Raekke must be an instance of <code>Raekke\Message</code>
 which have a <code>getName</code> and <code>getQueue</code> method. <code>getName</code> is used when working on
 messages and identifies the worker service that should work on it.</p>
 
@@ -107,15 +107,15 @@ used it is needed to add metadata for being able to serialize and deserialize th
 <span class="k">use</span> <span class="nx">Raekke\Message\DefaultMessage</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\Message\Envelope</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\Producer</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\QueueFactory\QueueFactory</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\Serializer\Serializer</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\QueueFactory\PersistentFactory</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\Serializer\JMSSerializer</span><span class="p">;</span>
 
 <span class="c1">// .. create serializer instance where src/Raekke/Resources/serializer</span>
 <span class="c1">// is registered as a metadata dir with "Raekke" as prefix.</span>
-<span class="nv">$serializer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Serializer</span><span class="p">(</span><span class="nv">$jmsSerializer</span><span class="p">);</span>
+<span class="nv">$serializer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">JMSSerializer</span><span class="p">(</span><span class="nv">$jmsSerializer</span><span class="p">);</span>
 
 <span class="c1">// .. create connection</span>
-<span class="nv">$factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">QueueFactory</span><span class="p">(</span><span class="nv">$connection</span><span class="p">,</span> <span class="nv">$serializer</span><span class="p">);</span>
+<span class="nv">$factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PersistentFactory</span><span class="p">(</span><span class="nv">$connection</span><span class="p">,</span> <span class="nv">$serializer</span><span class="p">);</span>
 <span class="nv">$producer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Producer</span><span class="p">(</span><span class="nv">$factory</span><span class="p">);</span>
 
 <span class="nv">$message</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DefaultMessage</span><span class="p">(</span><span class="s2">"SendNewsletter"</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
@@ -147,25 +147,25 @@ object should handle what messages it is need to register them first.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\ServiceResolver\ServiceResolver</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Raekke\ServiceResolver\ObjectResolver</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Raekke\Consumer</span><span class="p">;</span>
 
 <span class="c1">// .. create connection and a queuefactory</span>
 <span class="c1">// NewsletterMessageHandler is a pseudo service object that responds to</span>
 <span class="c1">// onSendNewsletter.</span>
 
-<span class="nv">$serviceResolver</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ServiceResolver</span><span class="p">;</span>
+<span class="nv">$serviceResolver</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ObjectResolver</span><span class="p">;</span>
 <span class="nv">$serviceResolver</span><span class="o">-&gt;</span><span class="na">register</span><span class="p">(</span><span class="s1">'SendNewsletter'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">NewsletterMessageHandler</span><span class="p">);</span>
 
-<span class="c1">// Raekke also comes with a ServiceResolver for Pimple (Silex) which allows you</span>
+<span class="c1">// Raekke also comes with a service resolver for Pimple (Silex) which allows you</span>
 <span class="c1">// to use service ids and have your service object lazy loader.</span>
 <span class="c1">//</span>
-<span class="c1">// $serviceResolver = new PimpleAwareServiceResolver($pimple);</span>
+<span class="c1">// $serviceResolver = new \Raekke\Pimple\PimpleAwareResolver($pimple);</span>
 <span class="c1">// $serviceResolver-&gt;register('SendNewsletter', 'my.service.id');</span>
 <span class="c1">//</span>
 <span class="c1">// Symfony DependencyInjection component is also supported.</span>
 <span class="c1">//</span>
-<span class="c1">// $serviceResolver = new ContainerAwareServiceResolver($container);</span>
+<span class="c1">// $serviceResolver = new \Raekke\Symfony\ContainerAwareServiceResolver($container);</span>
 <span class="c1">// $serviceResolver-&gt;register('SendNewsletter', 'my.service.id');</span>
 
 <span class="c1">// Create a Consumer and start the loop. The second argument is optional and</span>
@@ -217,11 +217,13 @@ better for your needs.</p>
 <ul>
 <li><a href="https://github.com/chrisboulton/php-resque">php-resque</a></li>
 <li><a href="https://github.com/defunkt/resque">Resque</a></li>
-</ul><h2>Happy Customers</h2>
+</ul><h2>Special Thanks</h2>
 
-<p>Not really anybody as it is not completly finished. If you need something like
-this i encourage you to contact me and we will figure out how we can work
-together on this.</p>
+<ul>
+<li>
+<a href="http://whitewashing.de">Benjamin Eberlei</a> for advice regarding architeture</li>
+<li><a href="http://peytz.dk">Peytz &amp; Co</a></li>
+</ul>
       </section>
       <footer>
         <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
