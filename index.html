@@ -7,7 +7,6 @@
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -16,36 +15,35 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1 class="header">Raekke</h1>
-        <p class="header">Message queue implemented with Redis and PHP.</p>
+        <h1>Raekke</h1>
+        <p>Message queue implemented with Redis and PHP.</p>
+
+        <p class="view"><a href="https://github.com/henrikbjorn/Bernard">View the Project on GitHub <small>henrikbjorn/Bernard</small></a></p>
+
 
         <ul>
-          <li class="download"><a class="buttons" href="https://github.com/henrikbjorn/Raekke/zipball/master">Download ZIP</a></li>
-          <li class="download"><a class="buttons" href="https://github.com/henrikbjorn/Raekke/tarball/master">Download TAR</a></li>
-          <li><a class="buttons github" href="https://github.com/henrikbjorn/Raekke">View On GitHub</a></li>
+          <li><a href="https://github.com/henrikbjorn/Bernard/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/henrikbjorn/Bernard/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/henrikbjorn/Bernard">View On <strong>GitHub</strong></a></li>
         </ul>
-
-        <p class="header">This project is maintained by <a class="header name" href="https://github.com/henrikbjorn">henrikbjorn</a></p>
-
-
       </header>
       <section>
-        <h1>Raekke</h1>
+        <h1>Bernard</h1>
 
-<p>Raekke is a message queue implemented in php. It is very similiar to Resque and
+<p>Bernard is a message queue implemented in php. It is very similiar to Resque and
 allows for easy creation of workers and creating distributed systems.</p>
 
-<p><a href="https://travis-ci.org/henrikbjorn/Raekke"><img src="https://travis-ci.org/henrikbjorn/Raekke.png?branch=master" alt="Build Status"></a></p>
+<p><a href="https://travis-ci.org/henrikbjorn/Bernard"><img src="https://travis-ci.org/henrikbjorn/Bernard.png?branch=master" alt="Build Status"></a></p>
 
 <h2>Getting Started</h2>
 
-<p>Raekke allows you as Resque to create messages and place them on a queue. And
+<p>Bernard allows you as Resque to create messages and place them on a queue. And
 later on pull thoose off the queue and process them. It is not a a complete
 solution to have any object method being called at a later time (as resque).</p>
 
 <h3>Installing</h3>
 
-<p>The easiest way to install Raekke is by using <a href="http://getcomposer.org">Composer</a>.
+<p>The easiest way to install Bernard is by using <a href="http://getcomposer.org">Composer</a>.
 If your projects do not already use this, it is highly recommended to start.</p>
 
 <div class="highlight"><pre><span class="nv">$ </span>composer require henrikbjorn/raekke:dev-master
@@ -53,7 +51,7 @@ If your projects do not already use this, it is highly recommended to start.</p>
 
 <h3>Examples</h3>
 
-<p>In the <code>example</code> directory there are two examples of running Raekke. <code>producer.php</code> will
+<p>In the <code>example</code> directory there are two examples of running Bernard. <code>producer.php</code> will
 connect to redis on localhost and produce <code>EchoTime</code> messages. <code>consumer.php</code> will consume
 theese and print the timestamp.</p>
 
@@ -70,7 +68,7 @@ sure your sets does not conflict with others of the same same.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\Connection\PredisConnection</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\Connection\PredisConnection</span><span class="p">;</span>
 <span class="k">use</span> <span class="nx">Predis\Client</span><span class="p">;</span>
 
 <span class="nv">$predis</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Client</span><span class="p">(</span><span class="s1">'tcp://localhost'</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
@@ -82,7 +80,7 @@ sure your sets does not conflict with others of the same same.</p>
 
 <h3>Producing Messages</h3>
 
-<p>Any message sent to Raekke must be an instance of <code>Raekke\Message</code>
+<p>Any message sent to Bernard must be an instance of <code>Bernard\Message</code>
 which have a <code>getName</code> and <code>getQueue</code> method. <code>getName</code> is used when working on
 messages and identifies the worker service that should work on it.</p>
 
@@ -93,7 +91,7 @@ The easiest is to give it to the producer as the queue name
 is taken from the message object.</p>
 
 <p>To make it easier to send messages and not require every type to be implemented
-in a seperate class a <code>Raekke\Message\DefaultMessage</code> is provided. It can hold
+in a seperate class a <code>Bernard\Message\DefaultMessage</code> is provided. It can hold
 any number of proberties and only needs a name for the message. The queue name
 is then generated from that. When generating the queue name it will insert a "_"
 before any uppercase letters and then lowercase everything.</p>
@@ -104,14 +102,14 @@ used it is needed to add metadata for being able to serialize and deserialize th
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\Message\DefaultMessage</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\Message\Envelope</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\Producer</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\QueueFactory\PersistentFactory</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\Serializer\JMSSerializer</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\Message\DefaultMessage</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\Message\Envelope</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\Producer</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\QueueFactory\PersistentFactory</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\Serializer\JMSSerializer</span><span class="p">;</span>
 
-<span class="c1">// .. create serializer instance where src/Raekke/Resources/serializer</span>
-<span class="c1">// is registered as a metadata dir with "Raekke" as prefix.</span>
+<span class="c1">// .. create serializer instance where src/Bernard/Resources/serializer</span>
+<span class="c1">// is registered as a metadata dir with "Bernard" as prefix.</span>
 <span class="nv">$serializer</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">JMSSerializer</span><span class="p">(</span><span class="nv">$jmsSerializer</span><span class="p">);</span>
 
 <span class="c1">// .. create connection</span>
@@ -130,7 +128,7 @@ used it is needed to add metadata for being able to serialize and deserialize th
 
 <h4>In Memory Queues</h4>
 
-<p>Raekke comes with a implemention for <code>SplQueue</code> which is completly in memory
+<p>Bernard comes with a implemention for <code>SplQueue</code> which is completly in memory
 It is useful for development and/or testing. As you dont want actions to be
 performed.</p>
 
@@ -147,8 +145,8 @@ object should handle what messages it is need to register them first.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\ServiceResolver\ObjectResolver</span><span class="p">;</span>
-<span class="k">use</span> <span class="nx">Raekke\Consumer</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\ServiceResolver\ObjectResolver</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\Consumer</span><span class="p">;</span>
 
 <span class="c1">// .. create connection and a queuefactory</span>
 <span class="c1">// NewsletterMessageHandler is a pseudo service object that responds to</span>
@@ -157,15 +155,15 @@ object should handle what messages it is need to register them first.</p>
 <span class="nv">$serviceResolver</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ObjectResolver</span><span class="p">;</span>
 <span class="nv">$serviceResolver</span><span class="o">-&gt;</span><span class="na">register</span><span class="p">(</span><span class="s1">'SendNewsletter'</span><span class="p">,</span> <span class="k">new</span> <span class="nx">NewsletterMessageHandler</span><span class="p">);</span>
 
-<span class="c1">// Raekke also comes with a service resolver for Pimple (Silex) which allows you</span>
+<span class="c1">// Bernard also comes with a service resolver for Pimple (Silex) which allows you</span>
 <span class="c1">// to use service ids and have your service object lazy loader.</span>
 <span class="c1">//</span>
-<span class="c1">// $serviceResolver = new \Raekke\Pimple\PimpleAwareResolver($pimple);</span>
+<span class="c1">// $serviceResolver = new \Bernard\Pimple\PimpleAwareResolver($pimple);</span>
 <span class="c1">// $serviceResolver-&gt;register('SendNewsletter', 'my.service.id');</span>
 <span class="c1">//</span>
 <span class="c1">// Symfony DependencyInjection component is also supported.</span>
 <span class="c1">//</span>
-<span class="c1">// $serviceResolver = new \Raekke\Symfony\ContainerAwareServiceResolver($container);</span>
+<span class="c1">// $serviceResolver = new \Bernard\Symfony\ContainerAwareServiceResolver($container);</span>
 <span class="c1">// $serviceResolver-&gt;register('SendNewsletter', 'my.service.id');</span>
 
 <span class="c1">// Create a Consumer and start the loop. The second argument is optional and</span>
@@ -174,12 +172,12 @@ object should handle what messages it is need to register them first.</p>
 <span class="nv">$consumer</span><span class="o">-&gt;</span><span class="na">consume</span><span class="p">(</span><span class="nv">$queueFactory</span><span class="o">-&gt;</span><span class="na">create</span><span class="p">(</span><span class="s1">'send-newsletter'</span><span class="p">));</span>
 </pre></div>
 
-<p>Raekke comes with a <code>ConsumeCommand</code> which can be used with Symfony Console 
+<p>Bernard comes with a <code>ConsumeCommand</code> which can be used with Symfony Console 
 component.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
-<span class="k">use</span> <span class="nx">Raekke\Command\ConsumeCommand</span><span class="p">;</span>
+<span class="k">use</span> <span class="nx">Bernard\Command\ConsumeCommand</span><span class="p">;</span>
 
 <span class="c1">// create $console application</span>
 <span class="nv">$console</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="k">new</span> <span class="nx">ConsumeCommand</span><span class="p">(</span><span class="nv">$services</span><span class="p">,</span> <span class="nv">$queueManager</span><span class="p">));</span>
@@ -199,7 +197,7 @@ number of integrations have been created.</p>
 
 <ul>
 <li>
-<strong>Silex</strong>: <a href="https://github.com/henrikbjorn/RaekkeServiceProvider">RaekkeServiceProvider</a>
+<strong>Silex</strong>: <a href="https://github.com/henrikbjorn/BernardServiceProvider">BernardServiceProvider</a>
 </li>
 </ul><h2>Monitoring</h2>
 
@@ -226,10 +224,11 @@ better for your needs.</p>
 </ul>
       </section>
       <footer>
-        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+        <p>This project is maintained by <a href="https://github.com/henrikbjorn">henrikbjorn</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-		
+    <script src="javascripts/scale.fix.js"></script>
+    
   </body>
 </html>
