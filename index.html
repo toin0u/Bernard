@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Raekke by henrikbjorn</title>
+    <title>Bernard by henrikbjorn</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -15,7 +15,7 @@
   <body>
     <div class="wrapper">
       <header>
-        <h1>Raekke</h1>
+        <h1>Bernard</h1>
         <p>Message queue implemented with Redis and PHP.</p>
 
         <p class="view"><a href="https://github.com/henrikbjorn/Bernard">View the Project on GitHub <small>henrikbjorn/Bernard</small></a></p>
@@ -46,7 +46,7 @@ solution to have any object method being called at a later time (as resque).</p>
 <p>The easiest way to install Bernard is by using <a href="http://getcomposer.org">Composer</a>.
 If your projects do not already use this, it is highly recommended to start.</p>
 
-<div class="highlight"><pre><span class="nv">$ </span>composer require henrikbjorn/raekke:dev-master
+<div class="highlight"><pre><span class="nv">$ </span>composer require henrikbjorn/bernard:dev-master
 </pre></div>
 
 <h3>Examples</h3>
@@ -72,7 +72,7 @@ sure your sets does not conflict with others of the same same.</p>
 <span class="k">use</span> <span class="nx">Predis\Client</span><span class="p">;</span>
 
 <span class="nv">$predis</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Client</span><span class="p">(</span><span class="s1">'tcp://localhost'</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
-    <span class="s1">'prefix'</span> <span class="o">=&gt;</span> <span class="s1">'raekke:'</span><span class="p">,</span>
+    <span class="s1">'prefix'</span> <span class="o">=&gt;</span> <span class="s1">'bernard:'</span><span class="p">,</span>
 <span class="p">));</span>
 
 <span class="nv">$connection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PredisConnection</span><span class="p">(</span><span class="nv">$predis</span><span class="p">);</span>
@@ -187,7 +187,7 @@ component.</p>
 the queue that your messages is on. If we use the earlier example with sending
 newsletter it would look like this.</p>
 
-<div class="highlight"><pre><span class="nv">$ </span>/path/to/console raekke:consume <span class="s1">'send-newsletter'</span>
+<div class="highlight"><pre><span class="nv">$ </span>/path/to/console bernard:consume <span class="s1">'send-newsletter'</span>
 </pre></div>
 
 <h2>Integration with Frameworks</h2>
@@ -218,6 +218,9 @@ better for your needs.</p>
 </ul><h2>Special Thanks</h2>
 
 <ul>
+<li>
+<a href="http://igor.io">Igor Wiedler</a> and <a href="http://davedevelopment.co.uk">Dave Marshall</a> for helping me find a better name
+than Raekke.</li>
 <li>
 <a href="http://whitewashing.de">Benjamin Eberlei</a> for advice regarding architeture</li>
 <li><a href="http://peytz.dk">Peytz &amp; Co</a></li>
