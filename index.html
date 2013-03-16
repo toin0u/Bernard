@@ -37,8 +37,8 @@ allows for easy creation of workers and creating distributed systems.</p>
 
 <h2>Getting Started</h2>
 
-<p>Bernard allows you as Resque to create messages and place them on a queue. And
-later on pull thoose off the queue and process them. It is not a a complete
+<p>Bernard allows you as Resque to create messages and place them on a queue, and
+later on pull those off the queue and process them. It is not a complete
 solution to have any object method being called at a later time (as resque).</p>
 
 <h3>Installing</h3>
@@ -63,8 +63,8 @@ have been sent. It uses <code>SplQueue</code> and does not need a redis backend.
 <p>For storing messages Redis is used together with Predis as the communication
 driver between php and Redis. This means Predis and Redis is required.</p>
 
-<p>It is highly encourage to use a prefix for Predis (but not enforces) to make
-sure your sets does not conflict with others of the same same.</p>
+<p>It is highly encouraged to use a prefix for Predis (but not enforced) to make
+sure your sets do not conflict with others of the same name.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
@@ -84,20 +84,20 @@ sure your sets does not conflict with others of the same same.</p>
 which have a <code>getName</code> and <code>getQueue</code> method. <code>getName</code> is used when working on
 messages and identifies the worker service that should work on it.</p>
 
-<p>A message is given to a producer that send the message to the right queue.
+<p>A message is given to a producer that sends the message to the right queue.
 It is also possible to get the queue directly from the queue factory and push
-the message there. But remember to wrap the message in a <code>Envelope</code> object.
-The easiest is to give it to the producer as the queue name
+the message there. But remember to wrap the message in an <code>Envelope</code> object.
+The easiest way is to give it to the producer as the queue name
 is taken from the message object.</p>
 
 <p>To make it easier to send messages and not require every type to be implemented
-in a seperate class a <code>Bernard\Message\DefaultMessage</code> is provided. It can hold
+in a seperate class, a <code>Bernard\Message\DefaultMessage</code> is provided. It can hold
 any number of proberties and only needs a name for the message. The queue name
 is then generated from that. When generating the queue name it will insert a "_"
 before any uppercase letters and then lowercase everything.</p>
 
 <p>Messages are serialized to json using <a href="http://jmsyst.com/libs/serializer">JMS Serializer</a>.
-Therefor an instance of that is required. Also if custom message classes are
+Therefore an instance of that is required. Also if custom message classes are
 used it is needed to add metadata for being able to serialize and deserialize them.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
@@ -128,20 +128,20 @@ used it is needed to add metadata for being able to serialize and deserialize th
 
 <h4>In Memory Queues</h4>
 
-<p>Bernard comes with a implemention for <code>SplQueue</code> which is completly in memory
-It is useful for development and/or testing. As you dont want actions to be
+<p>Bernard comes with an implemention for <code>SplQueue</code> which is completly in memory.
+It is useful for development and/or testing, when you don't necessarily want actions to be
 performed.</p>
 
 <h3>Consuming Messages</h3>
 
-<p>A single message represents a job that needs to be performed. And as described
-earlier a message's name is used to determaine what service object should have
-that message.</p>
+<p>A single message represents a job that needs to be performed, and as described
+earlier, a message's name is used to determine which service object should
+receive that message.</p>
 
-<p>A service object can be any object that have a method corresponding to the message
-name prefixed with on. So <code>new DefaultMessage('SendNewsletter')</code> will trigger a
-call to <code>$serviceObject-&gt;onSendNewsletter</code>. For the system to know what service
-object should handle what messages it is need to register them first.</p>
+<p>A service object can be any object that has a method corresponding to the message
+name prefixed with <code>on</code>. So <code>new DefaultMessage('SendNewsletter')</code> will trigger a
+call to <code>$serviceObject-&gt;onSendNewsletter</code>. For the system to know which service
+object should handle which messages, your are required to register them first.</p>
 
 <div class="highlight"><pre><span class="o">&lt;?</span><span class="nx">php</span>
 
@@ -184,16 +184,16 @@ component.</p>
 </pre></div>
 
 <p>It can then be used as any other console command. The argument given should be
-the queue that your messages is on. If we use the earlier example with sending
-newsletter it would look like this.</p>
+the queue that your messages are on. If we use the earlier example with sending
+a newsletter, it would look like this.</p>
 
 <div class="highlight"><pre><span class="nv">$ </span>/path/to/console bernard:consume <span class="s1">'send-newsletter'</span>
 </pre></div>
 
 <h2>Integration with Frameworks</h2>
 
-<p>To make it easier to start up and have it "just work" with sending messages a
-number of integrations have been created.</p>
+<p>To make it easier to get started and have it "just work" with sending messages,
+a number of integrations have been created.</p>
 
 <ul>
 <li>
@@ -201,16 +201,16 @@ number of integrations have been created.</p>
 </li>
 </ul><h2>Monitoring</h2>
 
-<p>Having a message queue where it is not possible to what whats in queue and the
-contents of the messages is not very handy. And for that there is <a href="https://github.com/henrikbjorn/Juno">Juno</a>.</p>
+<p>Having a message queue where it is not possible to know what is in the queue and the
+contents of the messages is not very handy, so for that there is <a href="https://github.com/henrikbjorn/Juno">Juno</a>.</p>
 
-<p>It is implemented in Silex and is very lightweight. Also if needed it can be
+<p>It is implemented in Silex and is very lightweight. Also if needed, it can be
 embedded in other Silex or Flint applications.</p>
 
 <h2>Alternatives</h2>
 
-<p>If this is not your cup of tea there exists other alternatives that might be
-better for your needs.</p>
+<p>If this is not your cup of tea there are other alternatives that might be
+better suited to your needs.</p>
 
 <ul>
 <li><a href="https://github.com/chrisboulton/php-resque">php-resque</a></li>
