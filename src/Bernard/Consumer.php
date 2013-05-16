@@ -43,13 +43,23 @@ class Consumer
         pcntl_signal(SIGTERM, array($this, 'trap'), true);
         pcntl_signal(SIGINT, array($this, 'trap'), true);
 
+        echo sprintf('Main PID: %s', posix_getpid()) . PHP_EOL;
+
         while (microtime(true) < $runtime && !$this->shutdown) {
+
+            echo '-----------------------' . PHP_EOL;
+
             if (!$envelope = $queue->dequeue()) {
                 continue;
             }
 
             try {
                 if (0 === $forked = $this->fork()) {
+
+                    echo sprintf('Child PID: %s', posix_getpid()) . PHP_EOL;
+
+                    throw new \RuntimeException();
+
                     $message = $envelope->getMessage();
                     $invocator = $this->services->resolve($message);
                     $invocator->invoke();
@@ -57,6 +67,9 @@ class Consumer
                 }
 
                 if (0 < $forked) {
+
+                    echo sprintf('Parent PID: %s', posix_getpid()) . PHP_EOL;
+
                     $forkedPid = pcntl_wait($status);
 
                     if (!pcntl_wifexited($status)) {
@@ -76,6 +89,8 @@ class Consumer
                     $envelope->incrementRetries();
                     $queue->enqueue($envelope);
 
+                    posix_kill(posix_getpid(), SIGTERM);
+
                     continue;
                 }
 
@@ -84,6 +99,8 @@ class Consumer
                 }
             }
         }
+
+        echo sprintf('Final PID: %s', posix_getpid()) . PHP_EOL;
     }
 
     /**
